@@ -70,7 +70,7 @@ struct DynamicArray {
     void clear() {
         delete[] array;
         size = 0;
-        capacity = 1;
+        capacity = 10;
         array = new T[capacity];
     }
 
@@ -78,11 +78,14 @@ struct DynamicArray {
         --size;
     }
 
-    string str(string(*func)(T so)) {
+    string str(string(*func)(T so), int k) {
+
+        if (k == -1 || k > size)
+            k = size;
 
         string s = "Actual size : " + to_string(size) + "\nCapacity : " + to_string(capacity) + "\n";
 
-        for (int i = 0; i < size; i++) {
+        for (int i = 0; i < k; i++) {
             s += func(array[i]);
         }
 
@@ -173,8 +176,8 @@ struct BinaryHeap {
         //}
     }
 
-    string str(string(*func)(T)) {
-        return heap_array->str(func);
+    string str(string(*func)(T), int k=-1) {
+        return heap_array->str(func, k);
     }
 
     void clear() {
@@ -182,8 +185,8 @@ struct BinaryHeap {
     }
 
     T poll(int (*func)(T*, T*)) {
- /*       if (!heap_array->getSize())
-            throw  std::*/
+        if (heap_array->getSize() == 0)
+            throw std::invalid_argument("nie istnieje");
 
         T max_element = *heap_array->get(0);
         heap_array->change(0, *heap_array->get(heap_array->getSize() - 1));
@@ -193,53 +196,53 @@ struct BinaryHeap {
     }
 
     void heapDown(int el_index, int (*func)(T*, T*)) {
-        //int l_child_index = left_child(el_index);
-        //int r_child_index = right_child(el_index);
-
-        //if (l_child_index < heap_array->getSize() && r_child_index < heap_array->getSize()) {
-        //    if (func(heap_array->get(l_child_index), heap_array->get(r_child_index)) == 1)
-        //    {
-        //        if (func(heap_array->get(l_child_index), heap_array->get(el_index)) == 1) {
-        //            heap_array->swap(l_child_index, el_index);
-        //            heapDown(l_child_index, func);
-        //        }
-        //    }
-        //    else if(func(heap_array->get(l_child_index), heap_array->get(r_child_index)) == -1) {
-        //        if (func(heap_array->get(r_child_index), heap_array->get(el_index)) == 1) {
-        //            heap_array->swap(r_child_index, el_index);
-        //            heapDown(r_child_index, func);
-        //        }
-        //    }
-        //}
-        //else if (l_child_index < heap_array->getSize()) {
-        //    if (func(heap_array->get(l_child_index), heap_array->get(el_index)) == 1) {
-        //        heap_array->swap(l_child_index, el_index);
-        //        heapDown(l_child_index, func);
-        //    }
-        //}
-        //else if (r_child_index < heap_array->getSize()) {
-        //    if (func(heap_array->get(r_child_index), heap_array->get(el_index)) == 1) {
-        //        heap_array->swap(r_child_index, el_index);
-        //        heapDown(r_child_index, func);
-        //    }
-        //}
-
         int l_child_index = left_child(el_index);
         int r_child_index = right_child(el_index);
 
-        int largest;
-        if (l_child_index < heap_array->getSize() && func(heap_array->get(l_child_index), heap_array->get(el_index)) == 1)
-            largest = l_child_index;
-        else
-            largest = el_index;
-
-        if (r_child_index < heap_array->getSize() && func(heap_array->get(r_child_index), heap_array->get(largest)) == 1)
-            largest = r_child_index;
-
-        if (el_index != largest) {
-            heap_array->swap(el_index, largest);
-            heapDown(largest, func);
+        if (l_child_index < heap_array->getSize() && r_child_index < heap_array->getSize()) {
+            if (func(heap_array->get(l_child_index), heap_array->get(r_child_index)) == 1)
+            {
+                if (func(heap_array->get(l_child_index), heap_array->get(el_index)) == 1) {
+                    heap_array->swap(l_child_index, el_index);
+                    heapDown(l_child_index, func);
+                }
+            }
+            else if(func(heap_array->get(l_child_index), heap_array->get(r_child_index)) == -1) {
+                if (func(heap_array->get(r_child_index), heap_array->get(el_index)) == 1) {
+                    heap_array->swap(r_child_index, el_index);
+                    heapDown(r_child_index, func);
+                }
+            }
         }
+        else if (l_child_index < heap_array->getSize()) {
+            if (func(heap_array->get(l_child_index), heap_array->get(el_index)) == 1) {
+                heap_array->swap(l_child_index, el_index);
+                heapDown(l_child_index, func);
+            }
+        }
+        else if (r_child_index < heap_array->getSize()) {
+            if (func(heap_array->get(r_child_index), heap_array->get(el_index)) == 1) {
+                heap_array->swap(r_child_index, el_index);
+                heapDown(r_child_index, func);
+            }
+        }
+
+        //int l_child_index = left_child(el_index);
+        //int r_child_index = right_child(el_index);
+
+        //int largest;
+        //if (l_child_index < heap_array->getSize() && func(heap_array->get(l_child_index), heap_array->get(el_index)) == 1)
+        //    largest = l_child_index;
+        //else
+        //    largest = el_index;
+
+        //if (r_child_index < heap_array->getSize() && func(heap_array->get(r_child_index), heap_array->get(largest)) == 1)
+        //    largest = r_child_index;
+
+        //if (el_index != largest) {
+        //    heap_array->swap(el_index, largest);
+        //    heapDown(largest, func);
+        //}
     }
 };
 
@@ -249,24 +252,77 @@ int main()
     int (*cmp)(simple_object *, simple_object *) = simple_object_comparator;
 
 
-    BinaryHeap<simple_object>* bh = new BinaryHeap<simple_object>();
-    bh->insert({ "Krystian", "Szabat", 21 }, simple_object_comparator);
-    bh->insert({ "Krystian", "Szabat", 19 }, simple_object_comparator);
-    bh->insert({ "Krystian", "Szabat", 69 }, simple_object_comparator);
-    bh->insert({ "Krystian", "Szabat", 5 }, simple_object_comparator);
-    bh->insert({ "Krystian", "szabat", 1 }, simple_object_comparator);
-    bh->insert({ "Krystian", "Szabat", 6 }, simple_object_comparator);
-    bh->insert({ "Krystian", "Szabat", 10 }, simple_object_comparator);
-    bh->insert({ "Krystian", "Szabat", 99 }, simple_object_comparator);
-    bh->insert({ "Krystian", "Szabat", 19 }, simple_object_comparator);
-    bh->insert({ "Krystian", "Szabat", 56 }, simple_object_comparator);
+    //BinaryHeap<simple_object>* bh = new BinaryHeap<simple_object>();
+    //bh->insert({ "Krystian", "Szabat", 21 }, simple_object_comparator);
+    //bh->insert({ "Krystian", "Szabat", 19 }, simple_object_comparator);
+    //bh->insert({ "Krystian", "Szabat", 69 }, simple_object_comparator);
+    //bh->insert({ "Krystian", "Szabat", 5 }, simple_object_comparator);
+    //bh->insert({ "Krystian", "szabat", 1 }, simple_object_comparator);
+    //bh->insert({ "Krystian", "Szabat", 6 }, simple_object_comparator);
+    //bh->insert({ "Krystian", "Szabat", 10 }, simple_object_comparator);
+    //bh->insert({ "Krystian", "Szabat", 99 }, simple_object_comparator);
+    //bh->insert({ "Krystian", "Szabat", 19 }, simple_object_comparator);
+    //bh->insert({ "Krystian", "Szabat", 56 }, simple_object_comparator);
     //bh->clear();
-    bh->poll(cmp);
-    bh->poll(cmp);
-    bh->poll(cmp);
-    bh->poll(cmp);
-    //cout << o1;
-    cout << bh->str(so_str);
+    //try {
+    //    bh->poll(cmp);
+    //}
+    //catch (const std::invalid_argument& e) {
+    //    cout << "eoo";
+    //}
+    //bh->poll(cmp);
+    //bh->poll(cmp);
+    //bh->poll(cmp);
+    //bh->poll(cmp);
+    //bh->poll(cmp);
+    //bh->poll(cmp);
+    //bh->poll(cmp);
+    //bh->poll(cmp);
+    //bh->poll(cmp);
+    //bh->poll(cmp);
+//    try {
+//    bh->poll(cmp);
+//}
+//catch (const std::invalid_argument& e) {
+//    cout << "eoo";
+//}
+    //bh->poll(cmp);
+//        try {
+//    bh->poll(cmp);
+//}
+//catch (const std::invalid_argument& e) {
+//    cout << "eoo";
+//}
+//    cout << bh->str(so_str);
 
-    //cout << bh->heap_array->array[0];
+
+    const int MAX_ORDER = 7;
+    BinaryHeap<simple_object>* bh = new BinaryHeap<simple_object>();
+    srand(time(NULL));
+
+    for (int o = 1; o <= MAX_ORDER; o++) {
+        const int n = pow(10, o);
+        clock_t t1 = clock();
+        for (int i = 0; i < n; i++) {
+            bh->insert({ "krkud", "edsfsf", rand() % 300 }, cmp);
+        }
+        clock_t t2 = clock();
+        cout << "\nCzas dodawania: " << static_cast<double>(t2 - t1) / CLOCKS_PER_SEC << '\n';
+        cout << bh->str(so_str, 10);
+
+        t1 = clock();
+
+        for (int i = 0; i < n; i++) {
+            simple_object so = bh->poll(cmp);
+        }
+
+        t2 = clock();
+
+        cout << "\nCzas usuwania: " << static_cast<double>(t2 - t1) / CLOCKS_PER_SEC << '\n';
+        cout << bh->str(so_str);
+
+        bh->clear();
+    }
+
+    delete bh;
 }
